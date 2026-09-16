@@ -1,5 +1,8 @@
 # Baseline Predictive Pipeline -- ETAI
 
+## Gonçalo Mealha
+## Student number: 20260565
+
 This is the **starting point** for your semester project: a small but *complete* predictive pipeline -- every piece a real project needs (entry point, config, data loading, preprocessing, model, evaluation), just kept as simple as possible for now.
 
 The task: predict two-year recidivism using ProPublica's COMPAS
@@ -35,7 +38,8 @@ This table is updated after each practical class, so you can always see what cha
 
 | Week | Practical class focus | Added to the pipeline |
 |------|------------------------|------------------------|
-| 2 | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
+| 2 | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` <br/> Model: Decision Tree with max_depth = 5, Train accuracy: 0.680, Test accuracy:  0.668; Model: Logistic Regression with max_iter = 1000, Train accuracy: 0.679,g Test accuracy: 0.680
+|
 
 ## Environment setup
 
