@@ -13,7 +13,7 @@ import yaml
 from sklearn.pipeline import Pipeline
 
 from src.data import load_data
-from src.preprocessing import clean_dataset, split_features_target, build_preprocessor, split_train_test
+from src.preprocessing import clean_dataset, split_features_target, build_preprocessor, split_dev_test
 from src.model import build_model
 from src.evaluate import evaluate, fairness_report
 from src.results import save_run
@@ -38,7 +38,7 @@ def main():
     # leak-safe split: everything above this line is target/split-independent and may
     # see the whole dataset; everything below (imputation, encoding, scaling) is fit
     # only on the training fold, inside the Pipeline below
-    X_train, X_test, y_train, y_test, extras_train, extras_test = split_train_test(
+    X_train, X_test, y_train, y_test, extras_train, extras_test = split_dev_test(
         X, y, extras,
         test_size=config["split"]["test_size"],
         random_state=config["split"]["random_state"],
