@@ -9,9 +9,17 @@ data:
   # check found redundant (see src/data_diagnostics.py + the EDA notebook's VIF walkthrough)
   drop_columns: ["id", "decile_score", "score_text", "prior_offenses", "age_in_months", "juvenile_total"]
 
-split:
-  test_size: 0.2
+test_set:
+  size: 0.2
   random_state: 42
+
+
+cv:
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+  scoring: "accuracy"   # one metric for now, so numbers compare directly with weeks 2-3
+  n_jobs: 1             # folds fitted in parallel; -1 = all cores (only pays off for slow models, e.g. random forest)
 
 # New this week (see Practical/W3/notebooks/01_eda_introduction.ipynb): what src/data_diagnostics.py
 # and src/preprocessing.py need to stay generic instead of hardcoding COMPAS's column names.
@@ -67,10 +75,20 @@ preprocessing:
     categorical_strategy: "most_frequent"   # applies to sex, age_cat, c_charge_degree
 
 model:
-  type: "logistic_regression"   # or "decision_tree"
-  params:
-    max_iter: 1000
+  # one of: "dummy" (majority-class floor), "logistic_regression", "decision_tree", "random_forest"
+  # (random forest: sensible defaults, untuned -- see the example below)
+  #type: "decision_tree"
+  #params:
+    #{}
+    #max_iter: 2000
     #max_depth: 5
+  # Random Forest example -- swap the two lines above for these to run it:
+  type: "random_forest"
+  params:
+     n_estimators: 300
+     random_state: 42   # forests are random (bootstrap rows + random feature subsets): fix the seed
+     n_jobs: -1         # use every CPU core -- the trees are independent, so they train in parallel
+
 
 output:
   results_dir: "results"   # each run's full report is saved here as a timestamped .txt file

@@ -74,6 +74,20 @@ def clean_dataset(df: pd.DataFrame, diagnostics_config: dict) -> pd.DataFrame:
     return out
 
 
+def drop_duplicate_rows(df: pd.DataFrame, id_column: str = None) -> pd.DataFrame:
+    """
+    TRAINING DATA ONLY (week 4). Drops exact duplicate rows and repeated ids (keeping
+    the first), so the same person can't be counted twice -- or land in both the
+    development and the locked test set. Must run *before* `split_dev_test()`.
+
+    Never call this on data you're predicting for: every row there needs a prediction.
+    """
+    out = df.drop_duplicates()
+    if id_column and id_column in out.columns:
+        out = out.drop_duplicates(subset=id_column, keep="first")
+    return out
+
+
 def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -> pd.DataFrame:
     """Adds a `<col>_was_missing` flag for each MNAR-diagnosed column, before that
     column gets imputed -- so a model can still see the pattern even though the fill

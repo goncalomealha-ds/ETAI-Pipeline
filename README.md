@@ -53,12 +53,12 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 
 ---
 
-## Pipeline Progress
-
 | Week | Practical Class Focus | Added / Changed in the Pipeline | Results & Impact |
 |---|---|---|---|
-| **2** | Introduction & baseline pipeline | Initial setup: naive single train/test split, simple `dropna()`, dummy encoding, baseline Decision Tree and Logistic Regression models. | **DT (max_depth=5):** Train: 0.680, Test: 0.668<br/>**LR (max_iter=1000):** Train: 0.679, Test: 0.6803 |
-| **3** | EDA & Diagnosis-Preprocessing | Added `diagnostics.py` (statistical missingness mechanism checks via $\chi^2$ and Cramér's V, domain validity rules, duplicate detection) and `preprocessing.py` (leak-safe category standardization, MNAR indicators, empirical encoder/scaler pairing via `ColumnTransformer`, redundant feature elimination). | **DT (max_depth=5):** Train: 0.684, Test: 0.665<br/>**LR (max_iter=1000):** Train: 0.676, Test: 0.657 |
+| **2** | Introduction & baseline pipeline | Initial setup: naive single train/test split, simple `dropna()`, dummy encoding, baseline Decision Tree and Logistic Regression models. | **DT (`max_depth=5`):** Train: 0.680, Test: 0.668<br/>**LR (`max_iter=1000`):** Train: 0.679, Test: 0.6803 |
+| **3** | EDA & Diagnosis-Preprocessing | Added `diagnostics.py` (statistical missingness mechanism checks via $\chi^2$ and Cramér's V, domain validity rules, duplicate detection) and `preprocessing.py` (leak-safe category standardization, MNAR indicators, empirical encoder/scaler pairing via `ColumnTransformer`, redundant feature elimination). | **DT (`max_depth=5`):** Train: 0.684, Test: 0.665<br/>**LR (`max_iter=1000`):** Train: 0.676, Test: 0.657 |
+| **4** | Model comparison & cross-validation | Added a Dummy majority-class baseline and evaluated Dummy, Logistic Regression, Decision Tree and Random Forest using 5-fold stratified cross-validation. Training-validation gaps are also monitored to assess potential overfitting. | **Dummy:** CV accuracy = 0.549 ± 0.000<br/>**LR:** CV accuracy = 0.673 ± 0.013<br/>**DT:** CV accuracy = 0.675 ± 0.013<br/>**RF:** CV accuracy = 0.641 ± 0.017 |
+
 
 ---
 
@@ -70,7 +70,7 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 * **`prior_offenses`, `age_in_months`, `juvenile_total`:** Dropped permanently due to severe multicollinearity confirmed through high Variance Inflation Factor (VIF) scores and direct linear dependency on `priors_count` and `age`.
 * **`sex` & `c_charge_degree`:** Standardized via canonical category mapping to resolve capitalization and whitespace inconsistencies; missing values imputed with the mode (`most_frequent`) along with an MNAR flag for charge degree.
 * **`race`:** Dropped from model training inputs to prevent explicit proxy bias, but tracked alongside `y_test` strictly for the disparate impact and fairness audit.
-* **Transformations:** Encoder and scaler selections configured through the `ColumnTransformer` (`TargetEncoder` + `StandardScaler`), fitted strictly on `X_train` to prevent test-fold leakage.
+* **Transformations:** Encoder and scaler selections configured through the `ColumnTransformer` (`TargetEncoder` + `RobustScaler`), fitted strictly on `X_train` to prevent test-fold leakage.
 
 ---
 
@@ -78,20 +78,32 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 
 ### Performance Summary
 
-| Model | Setup | Train Accuracy | Test Accuracy | Generalization Gap | 
-|------|------------|------------|------------|------------|
-| **Week 2 Baseline - LR** | Naive split, dropna | 0.679 | **0.680** | -0.001 |
-| **Week 2 Baseline - DT** | Naive split, dropna, depth=5 | 0.680 | 0.668 | +0.012 | 
-| **Week 3 Pipeline - DT** | Diagnosis-driven, depth=5 | **0.684** | **0.665** | +0.020 | 
-| **Week 3 Pipeline - LR** | Diagnosis-driven, iter=1000 | 0.676 | 0.657 | +0.019 | 
+| Model                | Holdout accuracy (W3) | CV accuracy (mean ± std) | CV train–val gap |
+|----------------------|-----------------------:|--------------------------:|-----------------:|
+| Dummy (majority)     | 0.550                  | 0.549 ± 0.000             | -0.000           |
+| Logistic regression  | 0.657                  | 0.673 ± 0.013             | +0.002           |
+| Decision tree        | 0.665                  | 0.675 ± 0.013             | +0.010           |
+| Random forest        | 0.655                  | 0.641 ± 0.017             | +0.097           |
+
 
 ### Analysis
 
-* **Current Best Model:** The **Decision Tree (`max_depth: 5`)** achieves the highest test accuracy (0.665) and superior balance across classes (Macro F1 of 0.65 vs. 0.64 for Logistic Regression). Both models perform better on non-recidivists (Class 0 recall $\approx 0.79\text{--}0.80$) than on recidivists (Class 1 recall $\approx 0.48\text{--}0.51$).
-* **Impact of Week 3 Preprocessing:** Test accuracy dropped slightly across both models compared to the naive Week 2 baseline ($-0.003$ for DT, $-0.023$ for LR). This is expected:
-  1. The Week 2 naive baseline evaluated only on rows surviving complete-case deletion (`dropna()`), essentially appraising a simpler, survivorship-biased distribution.
-  2. Introducing sparsity via MNAR indicators (`_was_missing`) and one-hot/target encodings increases input dimensionality, slightly constraining tree splits at `max_depth = 5`.
-  3. The current pipeline enforces strict leak-safe boundaries, trading an artificially inflated baseline score for genuine out-of-sample validity and robustness.
+* **Model comparison:** The current cross-validation results show very similar validation accuracy for Logistic Regression and Decision Tree (**0.673 ± 0.013** and **0.675 ± 0.013**, respectively). The Decision Tree has a slightly higher mean CV accuracy, but the difference is very small. Therefore, the current results do not indicate a clear performance separation between these two models.
+
+* **Generalization:** Logistic Regression has a smaller mean train-validation gap (**+0.002**) than the Decision Tree (**+0.010**), indicating a smaller difference between training and validation performance in the current 5-fold cross-validation.
+
+* **Random Forest:** The Random Forest obtained a lower mean validation accuracy (**0.641 ± 0.017**) and a substantially larger train-validation gap (**+0.097**), indicating a larger discrepancy between training and validation performance in the current configuration.
+
+* **Dummy baseline:** The Dummy classifier achieved **0.549 ± 0.000** accuracy by predicting the majority class. This provides a baseline against which the other models can be compared. Both Logistic Regression and Decision Tree substantially exceed this baseline in cross-validation.
+
+* **Class performance:** For the Logistic Regression, Class 0 has recall of **0.78**, compared with **0.54** for Class 1. For the Decision Tree, the corresponding recalls are **0.78** and **0.54**. Both models therefore show different recall levels across the two classes, despite having similar overall accuracy.
+
+* **Fairness audit:** The fairness analysis reports the false positive rate (FPR) separately by race. The results should be interpreted alongside the group sample sizes, particularly for groups with very few observations (e.g., Native American, $n=6$). The FPRs are calculated on the development set using out-of-fold predictions and are compared with the corresponding FPRs from COMPAS's own score.
+
+* **Impact of Week 3 preprocessing:** Test accuracy dropped slightly across both models compared to the naive Week 2 baseline ($-0.003$ for DT, $-0.023$ for LR). This is consistent with the change from complete-case evaluation to a more comprehensive preprocessing pipeline:
+  1. The Week 2 naive baseline evaluated only on rows surviving complete-case deletion (`dropna()`), potentially producing a different and less representative evaluation sample.
+  2. Introducing MNAR indicators and categorical transformations changes the feature representation and can affect model performance.
+  3. The current pipeline enforces strict leak-safe preprocessing boundaries, prioritizing a more robust evaluation methodology over potentially optimistic baseline results.
 ## Environment setup
 
 You only need to do this once per machine.
