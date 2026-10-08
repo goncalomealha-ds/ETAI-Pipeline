@@ -100,7 +100,7 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 
 * **Fairness audit:** The fairness analysis reports the false positive rate (FPR) separately by race. The results should be interpreted alongside the group sample sizes, particularly for groups with very few observations (e.g., Native American, $n=6$). The FPRs are calculated on the development set using out-of-fold predictions and are compared with the corresponding FPRs from COMPAS's own score.
 
-* **Impact of Week 3 preprocessing:** Test accuracy dropped slightly across both models compared to the naive Week 2 baseline ($-0.003$ for DT, $-0.023$ for LR). This is consistent with the change from complete-case evaluation to a more comprehensive preprocessing pipeline:
+* **Impact of Week 4 preprocessing:** Test accuracy dropped slightly across both models compared to the naive Week 2 baseline ($-0.003$ for DT, $-0.023$ for LR). This is consistent with the change from complete-case evaluation to a more comprehensive preprocessing pipeline:
   1. The Week 2 naive baseline evaluated only on rows surviving complete-case deletion (`dropna()`), potentially producing a different and less representative evaluation sample.
   2. Introducing MNAR indicators and categorical transformations changes the feature representation and can affect model performance.
   3. The current pipeline enforces strict leak-safe preprocessing boundaries, prioritizing a more robust evaluation methodology over potentially optimistic baseline results.

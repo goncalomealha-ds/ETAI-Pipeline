@@ -90,5 +90,24 @@ model:
      n_jobs: -1         # use every CPU core -- the trees are independent, so they train in parallel
 
 
+tuning:
+  enabled: true
+  n_trials: 30
+  n_splits: 5 
+  n_jobs: 1                                      # folds that score each candidate
+  random_state: 42                                  # seeds the sampler and those folds
+  # Keys are Pipeline parameter names. Types: int / float (low, high, log) or categorical (choices).
+  search_spaces:
+    decision_tree:
+      model__max_depth: {type: int, low: 1, high: 20}
+      model__min_samples_leaf: {type: int, low: 1, high: 200, log: true}
+      model__criterion: {type: categorical, choices: ["gini", "entropy"]}
+    random_forest:
+      model__n_estimators: {type: int, low: 50, high: 300}
+      model__max_depth: {type: int, low: 2, high: 15}
+      model__min_samples_leaf: {type: int, low: 1, high: 100, log: true}
+      model__max_features: {type: categorical, choices: ["sqrt", "log2"]}
+      model__criterion: {type: categorical, choices: ["gini", "entropy"]}
+
 output:
   results_dir: "results"   # each run's full report is saved here as a timestamped .txt file
