@@ -60,6 +60,7 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 | **4** | Model comparison & cross-validation | Added a Dummy majority-class baseline and evaluated Dummy, Logistic Regression, Decision Tree and Random Forest using 5-fold stratified cross-validation. Training-validation gaps are also monitored to assess potential overfitting. | **Dummy:** CV accuracy = 0.549 ± 0.000<br/>**LR:** CV accuracy = 0.673 ± 0.013<br/>**DT:** CV accuracy = 0.675 ± 0.013<br/>**RF:** CV accuracy = 0.641 ± 0.017 |
 | **5** | Hyperparameter tuning & model selection | Implemented Bayesian hyperparameter optimization (Optuna) across tree-based models on the development set using 5-fold stratified CV, followed by out-of-fold diagnostic classification reports and fairness audits. | **Tuned DT (trial 14):** CV accuracy = 0.680<br/>**Tuned RF (trial 20):** CV accuracy = 0.684 |
 | **6** | Ensemble methods | Extended pipeline to advanced ensemble architectures (AdaBoost with decision stumps and Oblique Random Forest with multivariate linear projections), evaluating baseline vs. tuned variants using 5-fold stratified CV. | **AdaBoost (baseline / tuned):** CV accuracy = 0.676 ± 0.011 / 0.676 ± 0.012<br/>**Oblique RF (baseline / tuned):** CV accuracy = 0.649 ± 0.008 / 0.646 ± 0.010 |
+| **7** | Boosting algorithms, probabilistic baseline & model scoreboard | Integrated `GradientBoostingClassifier`, `HistGradientBoostingClassifier`, and `GaussianNB` into the nested cross-validation and Optuna tuning pipelines. Transitioned primary selection metric to `roc_auc`, expanded multi-metric evaluation, and implemented automated tracking via `scoreboard` and `runs.csv`. | **Gradient Boosting (untuned / tuned):** `roc_auc` = 0.727 / **0.726 ± 0.014**<br/>**Hist Gradient Boosting (untuned / tuned):** `roc_auc` = 0.716 / **0.727 ± 0.015**<br/>**Naive Bayes (untuned):** `roc_auc` = **0.684 ± 0.011** |
 
 
 ---
@@ -89,6 +90,28 @@ This project focuses on predicting two-year recidivism using ProPublica's COMPAS
 | AdaBoost | 0.676 ± 0.011 | 0.676 ± 0.012 | **+0.006** | 0.680 | 0.79 | 0.55 |
 | Oblique Random Forest | 0.649 ± 0.008 | 0.646 ± 0.010 | +0.111 | 0.680 | **0.80** | 0.53 |
 
+
+### Scoreboard
+
+Selection metric: **`roc_auc`** (5-Fold Stratified Cross-Validation, nested tuning with Optuna where applicable). Values extracted directly from `results/runs.csv` (one representative run per model):
+
+| Model | Tuned (Nested CV) | Encoder | Scaler | Floor | Untuned (`roc_auc`) | Tuned (`roc_auc`) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **HistGradientBoosting** | Yes | Target | Robust | 0.500 | 0.716 | **0.727 ± 0.015** |
+| **AdaBoost** | Yes | Target | Robust | 0.500 | 0.723 | 0.727 ± 0.014 |
+| **Oblique Random Forest** | Yes | Target | Robust | 0.500 | 0.685 | 0.727 ± 0.015 |
+| **Gradient Boosting** | Yes | Target | Robust | 0.500 | 0.727 | 0.726 ± 0.014 |
+| **Random Forest** | Yes | Target | Robust | 0.500 | 0.684 | 0.725 ± 0.015 |
+| **Logistic Regression** | No | Target | Robust | 0.500 | 0.719 | 0.719 ± 0.014 |
+| **Decision Tree** | Yes | Target | Robust | 0.500 | 0.600 | 0.712 ± 0.007 |
+| **Naive Bayes** | No | Target | Robust | 0.500 | 0.684 | 0.684 ± 0.011 |
+| **Dummy** | No | Target | Robust | 0.500 | 0.500 | 0.500 ± 0.000 |
+
+---
+
+### Selection Metric
+
+I chose **`roc_auc`** as the primary selection metric because it assesses the models' discriminative capacity across all possible decision thresholds, making it invariant to class imbalance and arbitrary probability cutoffs. In a recidivism setting, ranking relative probability accurately is critical prior to setting operating thresholds. Furthermore, it directly measures separability against the random-guess baseline floor of 0.500.
 
 ### Analysis
 
